@@ -10,7 +10,7 @@
 - Компилятор: xtensa-esp32-elf-gcc (входит в ESP-IDF)
 
 ## Структура проекта
-
+```
 firmware/
 ├── main/
 │   ├── main.c          # Точка входа (app_main)
@@ -20,7 +20,7 @@ firmware/
 │   └── CMakeLists.txt  # Сборка компонента main
 ├── CMakeLists.txt      # Корневой CMake
 └── sdkconfig.defaults  # Настройки ESP-IDF
-
+```
 ## Сборка и прошивка
 
 ### 1. Установка ESD-IDF
