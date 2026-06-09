@@ -1,5 +1,7 @@
 #include "tcp.h"
 #include "config.h"
+#include "device_info.h"
+#include "wifi.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -26,21 +28,24 @@ static void tcp_task(void *parameter)
 
     while (1) { 
         int client_socket = accept(server_socket, NULL, NULL);
+        uint8_t command;
 
         if (client_socket < 0) {
             vTaskDelay(pdMS_TO_TICKS(100));
             continue;
         }
 
-        char buffer[TCP_BUFFER_SIZE];
-        int received;
+        while (recv(client_socket, &command, sizeof(command), 0) > 0) {
+            if (command == CMD_GET_INFO) {
+                device_info_t info = get_info();
+                send(client_socket, &info, sizeof(info), 0);
+            }
 
-        while ((received = recv(client_socket, buffer, sizeof(buffer), 0)) > 0) {
-            if (send(client_socket, buffer, received, 0) <= 0) {
-                break;
+            if (command == CMD_SET_WIFI_PASSWORD) {
+                wifi_set_password(client_socket);
             }
         }
-        
+
         shutdown(client_socket, SHUT_RDWR);
         close(client_socket);
     }

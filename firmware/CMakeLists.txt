@@ -3,6 +3,7 @@ idf_component_register(
         "main.c"
         "wifi.c"
         "tcp.c"
+        "device_info.c"
     
     INCLUDE_DIRS 
         "."
