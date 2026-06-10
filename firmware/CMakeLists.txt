@@ -2,7 +2,9 @@ idf_component_register(
     SRCS 
         "main.c"
         "wifi.c"
-        "tcp.c"
+        "tcp_server.c"
+        "protocol.c"
+        "command_handler.c"
         "device_info.c"
     
     INCLUDE_DIRS 

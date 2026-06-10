@@ -5,11 +5,7 @@
 
 #include "esp_event.h"
 #include "esp_netif.h"
-#include "esp_system.h"
 #include "esp_wifi.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "lwip/sockets.h"
 #include "nvs.h"
 #include "nvs_flash.h"
 
@@ -33,23 +29,16 @@ bool wifi_save_password(const char *password)
     return true;
 }
 
-void wifi_set_password(int socket)
+bool wifi_set_password(const uint8_t *password, size_t length)
 {
-    uint8_t length;
-    char password[WIFI_PASSWORD_MAX_LENGTH + 1];
-    if (recv(socket, &length, sizeof(length), MSG_WAITALL) != sizeof(length) ||
-        length < WIFI_PASSWORD_MIN_LENGTH ||
-        length > WIFI_PASSWORD_MAX_LENGTH ||
-        recv(socket, password, length, MSG_WAITALL) != length) {
-        return;
+    if (length < WIFI_PASSWORD_MIN_LENGTH ||
+        length > WIFI_PASSWORD_MAX_LENGTH) {
+        return false;
     }
-    password[length] = '\0';
-    uint8_t saved = wifi_save_password(password);
-    send(socket, &saved, sizeof(saved), 0);
-    if (saved) {
-        vTaskDelay(pdMS_TO_TICKS(100));
-        esp_restart();
-    }
+    char terminated_password[WIFI_PASSWORD_MAX_LENGTH + 1];
+    memcpy(terminated_password, password, length);
+    terminated_password[length] = '\0';
+    return wifi_save_password(terminated_password);
 }
 
 void wifi_init(void)

@@ -1,7 +1,7 @@
 #include "device_info.h"
 #include "config.h"
 
-device_info_t get_info(void)
+device_info_t device_info_get(void)
 {
     return (device_info_t) {
         .firmware_version = {
@@ -15,4 +15,14 @@ device_info_t get_info(void)
             .patch = PROTOCOL_VERSION_PATCH,
         },
     };
+}
+
+void device_info_serialize(const device_info_t *info, uint8_t payload[DEVICE_INFO_PAYLOAD_SIZE])
+{
+    payload[0] = info->firmware_version.major;
+    payload[1] = info->firmware_version.minor;
+    payload[2] = info->firmware_version.patch;
+    payload[3] = info->protocol_version.major;
+    payload[4] = info->protocol_version.minor;
+    payload[5] = info->protocol_version.patch;
 }

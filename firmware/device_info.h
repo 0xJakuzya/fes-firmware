@@ -1,6 +1,7 @@
 #ifndef DEVICE_INFO_H
 #define DEVICE_INFO_H
 
+#include "config.h"
 #include <stdint.h>
 
 typedef struct {
@@ -14,6 +15,7 @@ typedef struct {
     version_t protocol_version;
 } device_info_t;
 
-device_info_t get_info(void);
+device_info_t device_info_get(void);
+void device_info_serialize(const device_info_t *info, uint8_t payload[DEVICE_INFO_PAYLOAD_SIZE]);
 
 #endif
