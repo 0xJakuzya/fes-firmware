@@ -1,15 +1,21 @@
 idf_component_register(
-    SRCS 
+    SRCS
         "main.c"
         "wifi.c"
         "tcp_server.c"
         "protocol.c"
         "command_handler.c"
         "device_info.c"
-    
-    INCLUDE_DIRS 
+        "pca9685.c"
+        "stimulation.c"
+        "hw_module.c"
+        "device_state.c"
+        "heartbeat.c"
+        "safety.c"
+
+    INCLUDE_DIRS
         "."
-    
+
     PRIV_REQUIRES
         "esp_wifi"
         "esp_event"
@@ -17,4 +23,6 @@ idf_component_register(
         "nvs_flash"
         "freertos"
         "lwip"
+        "esp_driver_i2c"
+        "esp_timer"
 )

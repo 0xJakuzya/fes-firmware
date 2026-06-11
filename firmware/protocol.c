@@ -4,7 +4,7 @@
 #include "lwip/sockets.h"
 
 // преобразование чисел 55 AA → 0xAA55
-static uint16_t read_u16_le(const uint8_t *data)
+uint16_t protocol_read_u16_le(const uint8_t *data)
 {
     return (uint16_t)data[0] | ((uint16_t)data[1] << 8);
 }
@@ -139,8 +139,8 @@ bool protocol_receive_packet(int socket, protocol_packet_t *packet)
         }
 
         packet->msg_type = header[0];
-        packet->sequence_id = read_u16_le(&header[1]);
-        packet->payload_length = read_u16_le(&header[3]);
+        packet->sequence_id = protocol_read_u16_le(&header[1]);
+        packet->payload_length = protocol_read_u16_le(&header[3]);
         if (packet->payload_length > PROTOCOL_MAX_PAYLOAD_SIZE) {
             if (!protocol_send_error(
                     socket,
@@ -167,7 +167,7 @@ bool protocol_receive_packet(int socket, protocol_packet_t *packet)
             packet->payload,
             packet->payload_length
         );
-        if (read_u16_le(crc_bytes) != expected_crc) {
+        if (protocol_read_u16_le(crc_bytes) != expected_crc) {
             if (!protocol_send_error(
                     socket,
                     packet->sequence_id,

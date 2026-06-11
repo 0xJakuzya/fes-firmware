@@ -8,3 +8,6 @@ CONFIG_LOG_DEFAULT_LEVEL_INFO=y
 
 # Оптимизация
 CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+# Тик FreeRTOS 1 кГц — для приемлемого джиттера yield в задаче стимуляции
+CONFIG_FREERTOS_HZ=1000

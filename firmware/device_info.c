@@ -17,7 +17,8 @@ device_info_t device_info_get(void)
     };
 }
 
-void device_info_serialize(const device_info_t *info, uint8_t payload[DEVICE_INFO_PAYLOAD_SIZE])
+void device_info_serialize(const device_info_t *info, uint8_t state,
+                           uint8_t payload[DEVICE_INFO_PAYLOAD_SIZE])
 {
     payload[0] = info->firmware_version.major;
     payload[1] = info->firmware_version.minor;
@@ -25,4 +26,15 @@ void device_info_serialize(const device_info_t *info, uint8_t payload[DEVICE_INF
     payload[3] = info->protocol_version.major;
     payload[4] = info->protocol_version.minor;
     payload[5] = info->protocol_version.patch;
+    // Конфигурация устройства и поддерживаемые диапазоны параметров
+    payload[6] = FES_CHANNEL_COUNT;
+    payload[7] = FES_INTENSITY_MIN;
+    payload[8] = FES_INTENSITY_MAX;
+    payload[9] = FES_FREQUENCY_MIN_HZ;
+    payload[10] = FES_FREQUENCY_MAX_HZ;
+    payload[11] = (uint8_t)(FES_PULSE_WIDTH_MIN_US & 0xFF);
+    payload[12] = (uint8_t)(FES_PULSE_WIDTH_MIN_US >> 8);
+    payload[13] = (uint8_t)(FES_PULSE_WIDTH_MAX_US & 0xFF);
+    payload[14] = (uint8_t)(FES_PULSE_WIDTH_MAX_US >> 8);
+    payload[15] = state;
 }

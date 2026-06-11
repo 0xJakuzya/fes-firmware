@@ -16,6 +16,11 @@ typedef struct {
 } device_info_t;
 
 device_info_t device_info_get(void);
-void device_info_serialize(const device_info_t *info, uint8_t payload[DEVICE_INFO_PAYLOAD_SIZE]);
+
+// Сериализует расширенное рукопожатие: версии прошивки/протокола, количество
+// каналов, поддерживаемые диапазоны параметров и текущее состояние устройства.
+// state — значение device_state_t (передаётся, чтобы не вводить зависимость).
+void device_info_serialize(const device_info_t *info, uint8_t state,
+                           uint8_t payload[DEVICE_INFO_PAYLOAD_SIZE]);
 
 #endif
