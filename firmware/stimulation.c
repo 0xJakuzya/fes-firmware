@@ -7,30 +7,25 @@
 #include "freertos/semphr.h"
 #include "esp_timer.h"
 
-// Сентинелы фазы (помимо 0..4 — реальных фаз периода)
-#define PHASE_OFF   (-2)  // канал выключен, выходы в LOW
-#define PHASE_RESET (-1)  // начало нового периода, форсировать применение фазы 0
+#define PHASE_OFF   (-2)  
+#define PHASE_RESET (-1)
 
-// Рабочее состояние канала (принадлежит только задаче движка, кроме in1/in2).
 typedef struct {
-    uint8_t  in1;             // канал PCA9685 для IN1
-    uint8_t  in2;             // канал PCA9685 для IN2
-    uint8_t  intensity;       // снимок из общих параметров
+    uint8_t  in1;           
+    uint8_t  in2;           
+    uint8_t  intensity;     
     uint8_t  frequency_hz;
     uint16_t pulse_width_us;
     int64_t  period_start_us;
     int8_t   current_phase;
 } stim_runtime_t;
 
-static stimulation_channel_state_t s_params[FES_CHANNEL_COUNT];  // общие, под мьютексом
-static bool s_running;                                            // общий, под мьютексом
-static stim_runtime_t s_runtime[FES_CHANNEL_COUNT];               // только задача
+static stimulation_channel_state_t s_params[FES_CHANNEL_COUNT];  
+static bool s_running;                                           
+static stim_runtime_t s_runtime[FES_CHANNEL_COUNT];              
 static SemaphoreHandle_t s_mutex;
 static TaskHandle_t s_task;
 
-// ----------------------------------------------------------------------------
-// Хелперы
-// ----------------------------------------------------------------------------
 
 static uint16_t clamp_u16(uint16_t value, uint16_t low, uint16_t high)
 {
@@ -48,25 +43,23 @@ static uint16_t intensity_to_pwm(uint8_t intensity)
     return (uint16_t)(((uint32_t)intensity * PCA9685_PWM_MAX) / 255U);
 }
 
-// Определяет фазу периода по абсолютному времени от его начала.
 static int compute_phase(int64_t elapsed, uint32_t pw, uint32_t dead)
 {
     if (elapsed < (int64_t)pw) {
         return 0;  // прямая фаза
     }
     if (elapsed < (int64_t)pw + dead) {
-        return 1;  // пауза 1 (dead time)
+        return 1;  // пауза 1 
     }
     if (elapsed < (int64_t)2 * pw + dead) {
         return 2;  // обратная фаза
     }
     if (elapsed < (int64_t)2 * pw + 2 * dead) {
-        return 3;  // пауза 2 (dead time)
+        return 3;  // пауза 2 
     }
-    return 4;  // ожидание конца периода
+    return 4;  
 }
 
-// Выдаёт I2C-команды для новой фазы. Вызывается только при смене фазы.
 static void apply_phase(stim_runtime_t *c, int phase, uint16_t pwm_value)
 {
     switch (phase) {
@@ -92,7 +85,6 @@ static void apply_phase(stim_runtime_t *c, int phase, uint16_t pwm_value)
     }
 }
 
-// Один тик обслуживания канала.
 static void service_channel(stim_runtime_t *c, int64_t now, bool running)
 {
     // Канал выключен (стоп/интенсивность 0) → удерживать выходы в LOW
@@ -102,7 +94,7 @@ static void service_channel(stim_runtime_t *c, int64_t now, bool running)
             pca9685_set_off(c->in2);
             c->current_phase = PHASE_OFF;
         }
-        c->period_start_us = now;  // якорь периода для чистого перезапуска
+        c->period_start_us = now; 
         return;
     }
 
@@ -110,7 +102,6 @@ static void service_channel(stim_runtime_t *c, int64_t now, bool running)
     uint32_t pw = c->pulse_width_us;
     uint32_t dead = FES_DEAD_TIME_US;
 
-    // Корректировка длительности фаз, если они не помещаются в период
     if (2 * pw + 2 * dead > period) {
         pw = (period - 2 * dead) / 2;
     }
@@ -124,10 +115,9 @@ static void service_channel(stim_runtime_t *c, int64_t now, bool running)
         c->current_phase = phase;
     }
 
-    // Переход к новому периоду
     if (elapsed >= (int64_t)period) {
         c->period_start_us = now;
-        c->current_phase = PHASE_RESET;  // следующая итерация форсирует фазу 0
+        c->current_phase = PHASE_RESET;
     }
 }
 
@@ -135,7 +125,7 @@ static void stimulation_task(void *arg)
 {
     (void)arg;
     for (;;) {
-        // Снимок общих параметров (короткая критическая секция, без I2C под локом)
+      
         xSemaphoreTake(s_mutex, portMAX_DELAY);
         bool running = s_running;
         for (int i = 0; i < FES_CHANNEL_COUNT; ++i) {
@@ -150,22 +140,16 @@ static void stimulation_task(void *arg)
             service_channel(&s_runtime[i], now, running);
         }
 
-        vTaskDelay(1);  // отдать управление (кормление watchdog), джиттер ~1 мс
+        vTaskDelay(1); 
     }
 }
 
-// ----------------------------------------------------------------------------
-// Публичный API
-// ----------------------------------------------------------------------------
 
-esp_err_t stimulation_start(void)
+void stimulation_start(void)
 {
     s_mutex = xSemaphoreCreateMutex();
-    if (s_mutex == NULL) {
-        return ESP_ERR_NO_MEM;
-    }
-
     int64_t now = esp_timer_get_time();
+
     for (int i = 0; i < FES_CHANNEL_COUNT; ++i) {
         s_params[i].intensity = 0;
         s_params[i].frequency_hz = FES_DEFAULT_FREQUENCY_HZ;
@@ -181,10 +165,8 @@ esp_err_t stimulation_start(void)
     }
     s_running = false;
 
-    BaseType_t ok = xTaskCreatePinnedToCore(
-        stimulation_task, "stim", FES_TASK_STACK_SIZE, NULL,
+    xTaskCreatePinnedToCore(stimulation_task, "stim", FES_TASK_STACK_SIZE, NULL,
         FES_TASK_PRIORITY, &s_task, FES_TASK_CORE);
-    return ok == pdPASS ? ESP_OK : ESP_ERR_NO_MEM;
 }
 
 void stimulation_set_running(bool running)
@@ -205,8 +187,7 @@ bool stimulation_set_intensity(uint8_t channel, uint8_t intensity)
         return false;
     }
     xSemaphoreTake(s_mutex, portMAX_DELAY);
-    s_params[channel].intensity =
-        (uint8_t)clamp_u16(intensity, FES_INTENSITY_MIN, FES_INTENSITY_MAX);
+    s_params[channel].intensity = (uint8_t)clamp_u16(intensity, FES_INTENSITY_MIN, FES_INTENSITY_MAX);
     xSemaphoreGive(s_mutex);
     return true;
 }
@@ -217,8 +198,7 @@ bool stimulation_set_frequency(uint8_t channel, uint8_t frequency_hz)
         return false;
     }
     xSemaphoreTake(s_mutex, portMAX_DELAY);
-    s_params[channel].frequency_hz =
-        (uint8_t)clamp_u16(frequency_hz, FES_FREQUENCY_MIN_HZ, FES_FREQUENCY_MAX_HZ);
+    s_params[channel].frequency_hz = (uint8_t)clamp_u16(frequency_hz, FES_FREQUENCY_MIN_HZ, FES_FREQUENCY_MAX_HZ);
     xSemaphoreGive(s_mutex);
     return true;
 }
@@ -229,8 +209,7 @@ bool stimulation_set_pulse_width(uint8_t channel, uint16_t pulse_width_us)
         return false;
     }
     xSemaphoreTake(s_mutex, portMAX_DELAY);
-    s_params[channel].pulse_width_us =
-        clamp_u16(pulse_width_us, FES_PULSE_WIDTH_MIN_US, FES_PULSE_WIDTH_MAX_US);
+    s_params[channel].pulse_width_us = clamp_u16(pulse_width_us, FES_PULSE_WIDTH_MIN_US, FES_PULSE_WIDTH_MAX_US);
     xSemaphoreGive(s_mutex);
     return true;
 }

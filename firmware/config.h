@@ -12,11 +12,8 @@
 // TCP_CONFIG
 #define TCP_SERVER_PORT 5000
 
-// GET_INFO / HANDSHAKE
-// Расширенный payload рукопожатия (см. device_info_serialize):
-// 6 байт версий + channel_count(1) + intensity_min/max(2) + freq_min/max(2)
-// + pw_min/max(4) + state(1) = 16 байт
-#define DEVICE_INFO_PAYLOAD_SIZE 16
+// GET_INFO
+#define DEVICE_INFO_PAYLOAD_SIZE 15
 #define FIRMWARE_VERSION_MAJOR 1
 #define FIRMWARE_VERSION_MINOR 0
 #define FIRMWARE_VERSION_PATCH 0
@@ -27,9 +24,7 @@
 #define PROTOCOL_SIGNATURE 0xAA55
 #define PROTOCOL_MAX_PAYLOAD_SIZE 256
 
-// ============================================================================
-// АППАРАТНЫЙ МОДУЛЬ: I2C / PCA9685
-// ============================================================================
+// I2C / PCA9685
 #define PCA9685_SDA_GPIO        8
 #define PCA9685_SCL_GPIO        9
 #define PCA9685_I2C_FREQ_HZ     400000
@@ -38,10 +33,18 @@
 #define PCA9685_PWM_FREQ_HZ     1000
 #define PCA9685_PWM_MAX         4095
 #define PCA9685_I2C_TIMEOUT_MS  50
+/// Регистры PCA9685
+#define PCA9685_REG_MODE1     0x00
+#define PCA9685_REG_MODE2     0x01
+#define PCA9685_REG_LED0_ON_L 0x06
+#define PCA9685_REG_PRESCALE  0xFE
+/// Биты MODE1
+#define PCA9685_MODE1_RESTART 0x80
+#define PCA9685_MODE1_AI      0x20  
+#define PCA9685_MODE1_SLEEP   0x10
+#define PCA9685_PRESCALE_MIN  3 
 
-// ============================================================================
-// СТИМУЛЯЦИЯ
-// ============================================================================
+// STIMULATION
 #define FES_CHANNEL_COUNT       8
 #define FES_DEAD_TIME_US        200
 
@@ -55,19 +58,12 @@
 #define FES_DEFAULT_FREQUENCY_HZ    50
 #define FES_DEFAULT_PULSE_WIDTH_US  10000
 
-// Задача движка стимуляции
+// SIMULATION TASK
 #define FES_TASK_STACK_SIZE     4096
 #define FES_TASK_PRIORITY       10
-#define FES_TASK_CORE           1   // APP_CPU
+#define FES_TASK_CORE           1  
 
-// Маппинг канала ФЭС на выходы PCA9685 (IN1 = 2N, IN2 = 2N+1)
 #define FES_CH_IN1(n)  ((uint8_t)(2 * (n)))
 #define FES_CH_IN2(n)  ((uint8_t)(2 * (n) + 1))
-
-// ============================================================================
-// HEARTBEAT
-// ============================================================================
-#define HEARTBEAT_DEFAULT_INTERVAL_MS  500
-#define HEARTBEAT_DEFAULT_TIMEOUT_MS   2000
 
 #endif

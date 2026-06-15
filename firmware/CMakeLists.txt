@@ -8,10 +8,6 @@ idf_component_register(
         "device_info.c"
         "pca9685.c"
         "stimulation.c"
-        "hw_module.c"
-        "device_state.c"
-        "heartbeat.c"
-        "safety.c"
 
     INCLUDE_DIRS
         "."
