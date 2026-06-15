@@ -25,9 +25,10 @@ bool wifi_save_password(const char *password)
     if (nvs_open("config", NVS_READWRITE, &nvs) != ESP_OK) {
         return false;
     }
-    nvs_set_str(nvs, "password", password); 
-    result = nvs_commit(nvs);
+    nvs_set_str(nvs, "password", password);
+    nvs_commit(nvs);
     nvs_close(nvs);
+    return true;
 }
 
 bool wifi_set_password(const uint8_t *password, size_t length)

@@ -5,7 +5,7 @@
 #define WIFI_DEFAULT_PASSWORD "1234567890"
 #define WIFI_SSID       "FES_Device"
 #define WIFI_CHANNEL    1
-#define WIFI_MAX_CONN   1
+#define WIFI_MAX_CONN   4
 #define WIFI_PASSWORD_MIN_LENGTH 8
 #define WIFI_PASSWORD_MAX_LENGTH 63
 
