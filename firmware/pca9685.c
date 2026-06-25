@@ -1,5 +1,4 @@
 #include "pca9685.h"
-#include "config.h"
 
 #include "driver/i2c_master.h"
 #include "freertos/FreeRTOS.h"
@@ -38,7 +37,7 @@ static void pca9685_set_prescale(void)
     pca9685_write_reg(PCA9685_REG_MODE1, PCA9685_MODE1_SLEEP);
     pca9685_write_reg(PCA9685_REG_PRESCALE, (uint8_t)prescale);
     pca9685_write_reg(PCA9685_REG_MODE1, PCA9685_MODE1_AI);
-    vTaskDelay(pdMS_TO_TICKS(1));  // >500 мкс на стабилизацию осциллятора
+    vTaskDelay(pdMS_TO_TICKS(1));  
     pca9685_write_reg(PCA9685_REG_MODE1, PCA9685_MODE1_AI | PCA9685_MODE1_RESTART);
 }
 
