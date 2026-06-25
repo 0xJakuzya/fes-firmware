@@ -5,6 +5,7 @@
 
 #define PCA9685_SDA_GPIO        14
 #define PCA9685_SCL_GPIO        15
+
 #define PCA9685_I2C_FREQ_HZ     400000
 #define PCA9685_I2C_ADDR        0x40
 #define PCA9685_OSC_HZ          25000000

@@ -1,22 +1,21 @@
 #ifndef DEVICE_INFO_H
 #define DEVICE_INFO_H
 
-#include "config.h"
 #include <stdint.h>
 
-typedef struct {
-    uint8_t major;
-    uint8_t minor;
-    uint8_t patch;
-} version_t;
+#include "data_struct.h"
 
-typedef struct {
-    version_t firmware_version;
-    version_t protocol_version;
-} device_info_t;
+#define FIRMWARE_VERSION_MAJOR  1
+#define FIRMWARE_VERSION_MINOR  0
+#define FIRMWARE_VERSION_PATCH  0
+
+#define PROTOCOL_VERSION_MAJOR  1
+#define PROTOCOL_VERSION_MINOR  0
+#define PROTOCOL_VERSION_PATCH  0
+
+#define DEVICE_INFO_PAYLOAD_SIZE 7
 
 device_info_t device_info_get(void);
-
-void device_info_serialize(const device_info_t *info, uint8_t payload[DEVICE_INFO_PAYLOAD_SIZE]);
+void device_info_serialize(const device_info_t *info, uint8_t *payload);
 
 #endif

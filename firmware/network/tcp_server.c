@@ -1,6 +1,5 @@
 #include "tcp_server.h"
-#include "command_handler.h"
-#include "config.h"
+#include "api.h"
 #include "protocol.h"
 #include "stimulation.h"
 
@@ -8,12 +7,11 @@
 #include "freertos/task.h"
 #include "lwip/sockets.h"
 
-static void handle_client(int client_socket)
+static void tcp_handle_client(int client_socket)
 {
-    command_handler_send_device_info(client_socket, 0);
-    protocol_packet_t packet;
-    while (protocol_receive_packet(client_socket, &packet) &&
-           command_handler_process(client_socket, &packet)) {
+    protocol_request_t req;
+    while (protocol_receive_request(client_socket, &req) &&
+           command_handler_process(client_socket, &req)) {
     }
 }
 
@@ -35,7 +33,7 @@ static void tcp_server_task(void *parameter)
         struct sockaddr_in client_address;
         socklen_t len = sizeof(client_address);
         int client_socket = accept(server_socket, (struct sockaddr *)&client_address, &len);
-        handle_client(client_socket);
+        tcp_handle_client(client_socket);
         stimulation_set_running(false); 
         shutdown(client_socket, SHUT_RDWR);
         close(client_socket);
@@ -44,5 +42,7 @@ static void tcp_server_task(void *parameter)
 
 void tcp_server_start(void)
 {
-    xTaskCreate(tcp_server_task, "tcp_server", 4096, NULL, 5, NULL);
+    xTaskCreatePinnedToCore(tcp_server_task, "tcp_server",
+        TRANSPORT_TASK_STACK_SIZE, NULL, TRANSPORT_TASK_PRIORITY, NULL,
+        TRANSPORT_TASK_CORE);
 }

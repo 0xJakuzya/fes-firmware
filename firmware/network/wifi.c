@@ -1,5 +1,4 @@
 #include "wifi.h"
-#include "config.h"
 
 #include <string.h>
 

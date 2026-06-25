@@ -1,19 +1,22 @@
 idf_component_register(
     SRCS
         "main.c"
-        "wifi.c"
-        "tcp_server.c"
-        "protocol.c"
-        "command_handler.c"
+        "network/ethernet.c"
+        "network/tcp_server.c"
+        "network/protocol.c"
+        "network/wifi.c"
+        "api.c"
         "device_info.c"
         "pca9685.c"
         "stimulation.c"
 
     INCLUDE_DIRS
         "."
+        "network"
 
     PRIV_REQUIRES
         "esp_wifi"
+        "esp_eth"
         "esp_event"
         "esp_netif"
         "nvs_flash"

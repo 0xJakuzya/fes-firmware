@@ -46,7 +46,7 @@ bool protocol_receive_request(int socket, protocol_request_t *request)
     payload_length = header[2];
 
     // if !commands --> false
-    if (header[0] != PROTOCOL_TYPE_COMMAND) {
+    if (header[0] != MSG_TYPE_COMMAND) {
         protocol_send_error(socket, seq_id, RESULT_INVALID_TYPE);
         return false;
     }
@@ -87,7 +87,7 @@ bool protocol_send_response(int socket, uint8_t seq_id, const uint8_t *payload, 
         return false;
     }
 
-    buffer[0] = PROTOCOL_TYPE_DATA; // 0xDD - DATA msg_type
+    buffer[0] = MSG_TYPE_DATA; // 0xDD - DATA msg_type
     buffer[1] = seq_id;
     buffer[2] = payload_length;
 
@@ -101,9 +101,9 @@ bool protocol_send_response(int socket, uint8_t seq_id, const uint8_t *payload, 
 bool protocol_send_error(int socket, uint8_t seq_id, protocol_result_t result)
 {
     uint8_t buffer[PROTOCOL_RESULT_SIZE] = {
-        PROTOCOL_TYPE_ERROR, // 0xEE
+        MSG_TYPE_ERROR, // 0xEE
         seq_id,
-        PROTOCOL_RESULT_PAYLOAD_SIZE, // payload_length = 2 bytes
+        PROTOCOL_RESULT_PAYLOAD_SIZE,
         (uint8_t)result, 
     };
 
@@ -113,7 +113,7 @@ bool protocol_send_error(int socket, uint8_t seq_id, protocol_result_t result)
 bool protocol_send_ack(int socket, uint8_t seq_id)
 {
     uint8_t buffer[PROTOCOL_RESULT_SIZE] = {
-        PROTOCOL_TYPE_DATA,
+        MSG_TYPE_DATA, // 0xDD
         seq_id,
         PROTOCOL_RESULT_PAYLOAD_SIZE,
         (uint8_t)RESULT_OK,
