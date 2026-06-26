@@ -1,5 +1,5 @@
 #include "tcp_server.h"
-#include "api.h"
+#include "commands.h"
 #include "protocol.h"
 #include "stimulation.h"
 

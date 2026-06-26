@@ -74,4 +74,14 @@ typedef struct {
     uint16_t pulse_width_us; 
 } stimulation_channel_state_t;
 
+typedef struct {
+    uint8_t  in1;
+    uint8_t  in2;
+    uint8_t  intensity;
+    uint8_t  frequency_hz;
+    uint16_t pulse_width_us;
+    int64_t  period_start_us;
+    int8_t   current_phase;
+} stimulation_runtime_t;
+
 #endif

@@ -32,6 +32,7 @@ bool protocol_receive_request(int socket, protocol_request_t *request)
 
     uint8_t seq_id; // request id
     uint8_t payload_length; // len(payload)
+    uint8_t msg_type;
 
     if (request == NULL) {
         return false;
@@ -42,11 +43,12 @@ bool protocol_receive_request(int socket, protocol_request_t *request)
         return false;
     }
 
+    msg_type = header[0];
     seq_id = header[1];
     payload_length = header[2];
 
     // if !commands --> false
-    if (header[0] != MSG_TYPE_COMMAND) {
+    if (msg_type != MSG_TYPE_COMMAND) {
         protocol_send_error(socket, seq_id, RESULT_INVALID_TYPE);
         return false;
     }
