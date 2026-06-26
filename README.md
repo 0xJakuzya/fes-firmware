@@ -39,5 +39,3 @@ idf.py set-target esp32s3
 idf.py build
 idf.py -p COM1 flash monitor
 ```
-
-*Разработано в рамках научно-исследовательских работ. Версия прошивки 1.0.0.*
