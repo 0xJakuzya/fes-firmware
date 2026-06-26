@@ -63,13 +63,13 @@ static bool get_channel_param(int socket, uint8_t seq_id,
     return protocol_send_response(socket, seq_id, payload, sizeof(payload));
 }
 
-static bool start(int socket, uint8_t seq_id)
+static bool handle_start(int socket, uint8_t seq_id)
 {
     stimulation_set_running(true);
     return protocol_send_ack(socket, seq_id);
 }
 
-static bool stop(int socket, uint8_t seq_id)
+static bool handle_stop(int socket, uint8_t seq_id)
 {
     stimulation_set_running(false);
     return protocol_send_ack(socket, seq_id);
