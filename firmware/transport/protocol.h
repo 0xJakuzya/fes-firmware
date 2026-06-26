@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "data_struct.h"
+#include "data.h"
 
 #define PROTOCOL_HEADER_SIZE 3 // size header
 #define PROTOCOL_RESULT_SIZE 4 // ask/error packet size (header_size + payload_size)

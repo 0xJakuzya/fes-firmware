@@ -1,17 +1,18 @@
 idf_component_register(
     SRCS
         "main.c"
-        "network/tcp_server.c"
-        "network/protocol.c"
-        "network/wifi.c"
-        "commands.c"
-        "utils.c"
-        "pca9685.c"
-        "stimulation.c"
+        "transport/tcp_server.c"
+        "transport/protocol.c"
+        "transport/wifi.c"
+        "transport/commands.c"
+        "transport/utils.c"
+        "hardware/pca9685.c"
+        "hardware/stimulation.c"
 
     INCLUDE_DIRS
         "."
-        "network"
+        "transport"
+        "hardware"
 
     PRIV_REQUIRES
         "esp_wifi"
