@@ -5,7 +5,7 @@ idf_component_register(
         "network/protocol.c"
         "network/wifi.c"
         "commands.c"
-        "device_info.c"
+        "utils.c"
         "pca9685.c"
         "stimulation.c"
 

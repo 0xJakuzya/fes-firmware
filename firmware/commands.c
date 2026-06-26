@@ -1,89 +1,82 @@
 #include "commands.h"
-#include "device_info.h"
 #include "stimulation.h"
+#include "utils.h"
 
-static uint16_t read_u16_le(const uint8_t *data)
+bool get_info(int socket, uint8_t seq_id)
 {
-    return (uint16_t)(data[0] | ((uint16_t)data[1] << 8));
-}
-
-static void write_u16_le(uint8_t *data, uint16_t value)
-{
-    data[0] = (uint8_t)(value & 0xFF);
-    data[1] = (uint8_t)(value >> 8);
-}
-
-static bool get_info(int socket, uint8_t seq_id)
-{
-    device_info_t info = device_info_get();
-    uint8_t payload[DEVICE_INFO_PAYLOAD_SIZE];
-    device_info_serialize(&info, payload);
+    uint8_t payload[DEVICE_INFO_PAYLOAD_SIZE] = {
+        PROTOCOL_VERSION_MAJOR,
+        PROTOCOL_VERSION_MINOR,
+        FIRMWARE_VERSION_MAJOR,
+        FIRMWARE_VERSION_MINOR,
+        FIRMWARE_VERSION_PATCH,
+        FES_CHANNEL_COUNT,
+    };
     return protocol_send_response(socket, seq_id, payload, sizeof(payload));
 }
 
-static bool set_channel_param(int socket, uint8_t seq_id,
-                              const protocol_request_t *req)
+static bool set_channel_param(int socket, uint8_t seq_id, const request_t *request)
 {
-    if (req->payload_length != 5) {
+    if (request->payload_length != 5) {
         return protocol_send_error(socket, seq_id, RESULT_INVALID_LENGTH);
-    }
+    } // ждем payload = 5 byte
 
-    uint8_t  channel      = req->payload[0];
-    uint8_t  intensity    = req->payload[1];
-    uint8_t  frequency_hz = req->payload[2];
-    uint16_t pulse_width  = read_u16_le(&req->payload[3]);
+    uint8_t  channel      = request->payload[0]; // channel_id
+    uint8_t  intensity    = request->payload[1]; // intensity
+    uint8_t  frequency_hz = request->payload[2]; // frequency
+    uint16_t pulse_width  = read_u16(&request->payload[3]); // 16-bit pulse_us
 
+    // set channel params
     if (!stimulation_set_intensity(channel, intensity) ||
         !stimulation_set_frequency(channel, frequency_hz) ||
         !stimulation_set_pulse_width(channel, pulse_width)) {
         return protocol_send_error(socket, seq_id, RESULT_INVALID_PARAM);
     }
-
+    // send RESULT_OK
     return protocol_send_ack(socket, seq_id);
 }
 
-static bool get_channel_param(int socket, uint8_t seq_id,
-                              const protocol_request_t *req)
+static bool get_channel_param(int socket, uint8_t seq_id, const request_t *request)
 {
-    if (req->payload_length != 1) {
-        return protocol_send_error(socket, seq_id, RESULT_INVALID_LENGTH);
-    }
+    channel_state_t state; // будет хранить параметры канала
 
-    uint8_t channel = req->payload[0];
-    stimulation_channel_state_t state;
-    if (!stimulation_get_channel(channel, &state)) {
+    uint8_t channel = request->payload[0]; // номер канала
+    uint8_t payload[5]; // массив для отправки ответа
+
+    if (!stimulation_get_channel(channel, &state)) { // берем параметры с канала
         return protocol_send_error(socket, seq_id, RESULT_INVALID_PARAM);
     }
 
-    uint8_t payload[5];
-    payload[0] = COM_GET_CHANNEL;
-    payload[1] = state.intensity;
-    payload[2] = state.frequency_hz;
-    write_u16_le(&payload[3], state.pulse_width_us);
-    return protocol_send_response(socket, seq_id, payload, sizeof(payload));
+    // собираем ответ для клиента
+    payload[0] = GET_CHANNEL_PARAM; // эхо команды
+    payload[1] = state.intensity; // intensity
+    payload[2] = state.frequency_hz; // frequency
+    write_u16(&payload[3], state.pulse_width_us); // 16-bit pulse_us
+
+    return protocol_send_response(socket, seq_id, payload, sizeof(payload)); // send packet
 }
 
-static bool handle_start(int socket, uint8_t seq_id)
+static bool start_channel(int socket, uint8_t seq_id)
 {
     stimulation_set_running(true);
     return protocol_send_ack(socket, seq_id);
 }
 
-static bool handle_stop(int socket, uint8_t seq_id)
+static bool stop_channel(int socket, uint8_t seq_id)
 {
     stimulation_set_running(false);
     return protocol_send_ack(socket, seq_id);
 }
 
-bool command_handler_process(int socket, const protocol_request_t *req)
+bool command_handler(int socket, const request_t *request)
 {
-    switch (req->com_id) {
-    case COM_GET_INFO:          return get_info(socket, req->seq_id);
-    case COM_SET_CHANNEL_PARAM: return set_channel_param(socket, req->seq_id, req);
-    case COM_GET_CHANNEL:       return get_channel_param(socket, req->seq_id, req);
-    case COM_START:             return handle_start(socket, req->seq_id);
-    case COM_STOP:              return handle_stop(socket, req->seq_id);
+    switch (request->command_id) {
+    case GET_INFO:          return get_info(socket, request->seq_id);
+    case SET_CHANNEL_PARAM: return set_channel_param(socket, request->seq_id, request);
+    case GET_CHANNEL_PARAM: return get_channel_param(socket, request->seq_id, request);
+    case START_CHANNEL:     return start_channel(socket, request->seq_id);
+    case STOP_CHANNEL:      return stop_channel(socket, request->seq_id);
     default:
-        return protocol_send_error(socket, req->seq_id, RESULT_UNKNOWN_CMD);
+        return protocol_send_error(socket, request->seq_id, RESULT_UNKNOWN_CMD);
     }
 }

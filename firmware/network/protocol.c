@@ -25,7 +25,7 @@ static bool send_all(int socket, const uint8_t *buffer, size_t len)
 }
 
 // parsing protocol packet
-bool protocol_receive_request(int socket, protocol_request_t *request)
+bool protocol_receive_request(int socket, request_t *request)
 {
     uint8_t header[PROTOCOL_HEADER_SIZE]; // msg_type, seq_id, payload_length
     uint8_t raw[PROTOCOL_MAX_PAYLOAD_SIZE]; // create 128 bytes array for payload
@@ -64,7 +64,7 @@ bool protocol_receive_request(int socket, protocol_request_t *request)
     }
 
     request->seq_id = seq_id;  // id request
-    request->com_id = raw[0]; // command_id
+    request->command_id = raw[0]; // command_id
     request->payload_length = payload_length - 1; // len(payload) without command_id
 
     if (request->payload_length > 0) {
@@ -100,7 +100,7 @@ bool protocol_send_response(int socket, uint8_t seq_id, const uint8_t *payload, 
     return send_all(socket, buffer, PROTOCOL_HEADER_SIZE + payload_length);
 }
 
-bool protocol_send_error(int socket, uint8_t seq_id, protocol_result_t result)
+bool protocol_send_error(int socket, uint8_t seq_id, result_t result)
 {
     uint8_t buffer[PROTOCOL_RESULT_SIZE] = {
         MSG_TYPE_ERROR, // 0xEE

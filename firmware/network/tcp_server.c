@@ -7,11 +7,16 @@
 #include "freertos/task.h"
 #include "lwip/sockets.h"
 
-static void tcp_handle_client(int client_socket)
+static void tcp_client(int client_socket)
 {
-    protocol_request_t req;
-    while (protocol_receive_request(client_socket, &req) &&
-           command_handler_process(client_socket, &req)) {
+    get_info(client_socket, 0); // handshake
+    
+    request_t request;
+
+    while (protocol_receive_request(client_socket, &request)) {
+        if (!command_handler(client_socket, &request)) {
+            break;
+        }
     }
 }
 
@@ -33,7 +38,7 @@ static void tcp_server_task(void *parameter)
         struct sockaddr_in client_address;
         socklen_t len = sizeof(client_address);
         int client_socket = accept(server_socket, (struct sockaddr *)&client_address, &len);
-        tcp_handle_client(client_socket);
+        tcp_client(client_socket);
         stimulation_set_running(false); 
         shutdown(client_socket, SHUT_RDWR);
         close(client_socket);
