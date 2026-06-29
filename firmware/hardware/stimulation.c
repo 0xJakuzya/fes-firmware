@@ -13,9 +13,7 @@ static channel_state_t s_params[FES_CHANNEL_COUNT];
 static runtime_t       s_runtime[FES_CHANNEL_COUNT];
 static SemaphoreHandle_t           s_mutex;
 static TaskHandle_t                s_task;
-static bool                        s_running;
 
-// Utils
 static uint16_t clamp_u16(uint16_t value, uint16_t low, uint16_t high)
 {
     if (value < low) return low;
@@ -60,7 +58,6 @@ static void apply_phase(runtime_t *c, int phase, uint16_t pwm_value)
     }
 }
 
-// Clamps pulse width so the active phases (2*pw + 2*dead) fit within one period.
 static uint32_t effective_pulse_width(uint32_t pw, uint32_t dead, uint32_t period)
 {
     if (2 * pw + 2 * dead > period) {
@@ -69,9 +66,9 @@ static uint32_t effective_pulse_width(uint32_t pw, uint32_t dead, uint32_t perio
     return pw;
 }
 
-static void service_channel(runtime_t *c, int64_t now, bool running)
+static void service_channel(runtime_t *c, int64_t now)
 {
-    if (!running || c->intensity == 0) {
+    if (c->status != CH_RUNNING || c->intensity == 0) {
         if (c->current_phase != PHASE_OFF) {
             pca9685_set_off(c->in1);
             pca9685_set_off(c->in2);
@@ -108,17 +105,17 @@ static void stimulation_task(void *arg)
 
     for (;;) {
         xSemaphoreTake(s_mutex, portMAX_DELAY);
-        bool running = s_running;
         for (int i = 0; i < FES_CHANNEL_COUNT; ++i) {
             s_runtime[i].intensity      = s_params[i].intensity;
             s_runtime[i].frequency_hz   = s_params[i].frequency_hz;
             s_runtime[i].pulse_width_us = s_params[i].pulse_width_us;
+            s_runtime[i].status         = s_params[i].status;
         }
         xSemaphoreGive(s_mutex);
 
         int64_t now = esp_timer_get_time();
         for (int i = 0; i < FES_CHANNEL_COUNT; ++i) {
-            service_channel(&s_runtime[i], now, running);
+            service_channel(&s_runtime[i], now);
         }
 
         vTaskDelay(1);
@@ -134,12 +131,13 @@ void stimulation_start(void)
         s_params[i].intensity      = 0;
         s_params[i].frequency_hz   = FES_DEFAULT_FREQUENCY_HZ;
         s_params[i].pulse_width_us = FES_DEFAULT_PULSE_WIDTH_US;
-
+        s_params[i].status         = CH_DISABLED;
         s_runtime[i].in1            = FES_CH_IN1(i);
         s_runtime[i].in2            = FES_CH_IN2(i);
         s_runtime[i].intensity      = 0;
         s_runtime[i].frequency_hz   = FES_DEFAULT_FREQUENCY_HZ;
         s_runtime[i].pulse_width_us = FES_DEFAULT_PULSE_WIDTH_US;
+        s_runtime[i].status         = CH_DISABLED;
         s_runtime[i].period_start_us = now;
         s_runtime[i].current_phase  = PHASE_OFF;
     }
@@ -148,22 +146,47 @@ void stimulation_start(void)
         FES_TASK_PRIORITY, &s_task, FES_TASK_CORE);
 }
 
-void stimulation_set_running(bool running)
+bool stimulation_start_channel(uint8_t channel)
+{
+    if (channel >= FES_CHANNEL_COUNT) return false;
+    bool ok = false;
+    xSemaphoreTake(s_mutex, portMAX_DELAY);
+    if (s_params[channel].status != CH_DISABLED) {
+        s_params[channel].status = CH_RUNNING;
+        ok = true;
+    }
+    xSemaphoreGive(s_mutex);
+    return ok;
+}
+
+bool stimulation_stop_channel(uint8_t channel)
+{
+    if (channel >= FES_CHANNEL_COUNT) return false;
+    xSemaphoreTake(s_mutex, portMAX_DELAY);
+    if (s_params[channel].status == CH_RUNNING) {
+        s_params[channel].status = CH_READY;
+    }
+    xSemaphoreGive(s_mutex);
+    return true;
+}
+
+void stimulation_stop_all(void)
 {
     xSemaphoreTake(s_mutex, portMAX_DELAY);
-    s_running = running;
+    for (int i = 0; i < FES_CHANNEL_COUNT; ++i) {
+        if (s_params[i].status == CH_RUNNING) {
+            s_params[i].status = CH_READY;
+        }
+    }
     xSemaphoreGive(s_mutex);
 }
 
-// Identifies which channel field a locked setter writes.
 typedef enum {
     FIELD_INTENSITY,
     FIELD_FREQUENCY,
     FIELD_PULSE_WIDTH,
 } channel_field_t;
 
-// Channel-checked, mutex-protected clamped write. Indexing happens after the
-// bounds check so an out-of-range channel never forms a past-the-end pointer.
 static bool set_param_locked(uint8_t channel, channel_field_t field,
                              uint16_t value, uint16_t low, uint16_t high)
 {
@@ -171,7 +194,14 @@ static bool set_param_locked(uint8_t channel, channel_field_t field,
     xSemaphoreTake(s_mutex, portMAX_DELAY);
     uint16_t clamped = clamp_u16(value, low, high);
     switch (field) {
-    case FIELD_INTENSITY:     s_params[channel].intensity      = (uint8_t)clamped; break;
+    case FIELD_INTENSITY:
+        s_params[channel].intensity = (uint8_t)clamped;
+        if (clamped == 0) {
+            s_params[channel].status = CH_DISABLED;
+        } else if (s_params[channel].status == CH_DISABLED) {
+            s_params[channel].status = CH_READY;
+        }
+        break;
     case FIELD_FREQUENCY:     s_params[channel].frequency_hz   = (uint8_t)clamped; break;
     case FIELD_PULSE_WIDTH:   s_params[channel].pulse_width_us = clamped;          break;
     }

@@ -4,6 +4,7 @@ idf_component_register(
         "transport/tcp_server.c"
         "transport/protocol.c"
         "transport/wifi.c"
+        "transport/ethernet.c"
         "transport/commands.c"
         "transport/utils.c"
         "hardware/pca9685.c"
@@ -16,6 +17,7 @@ idf_component_register(
 
     PRIV_REQUIRES
         "esp_wifi"
+        "esp_eth"
         "esp_event"
         "esp_netif"
         "nvs_flash"

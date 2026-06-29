@@ -39,7 +39,7 @@ static void tcp_server_task(void *parameter)
         socklen_t len = sizeof(client_address);
         int client_socket = accept(server_socket, (struct sockaddr *)&client_address, &len);
         tcp_client(client_socket);
-        stimulation_set_running(false); 
+        stimulation_stop_all();
         shutdown(client_socket, SHUT_RDWR);
         close(client_socket);
     }

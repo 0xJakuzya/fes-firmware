@@ -32,7 +32,9 @@ bool wifi_save_password(const char *password)
 
 bool wifi_set_password(const uint8_t *password, size_t length)
 {
-    if (password == NULL || length > WIFI_PASSWORD_MAX_LENGTH) {
+    if (password == NULL ||
+        length < WIFI_PASSWORD_MIN_LENGTH ||
+        length > WIFI_PASSWORD_MAX_LENGTH) {
         return false;
     }
     char terminated_password[WIFI_PASSWORD_MAX_LENGTH + 1];

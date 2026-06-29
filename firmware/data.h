@@ -51,27 +51,29 @@ typedef enum {
     PULSE_WIDTH = 0x02,
 } param_t;
 
-// stimulation parameters (3 type)
-typedef struct {
-    uint8_t  intensity;
-    uint8_t  frequency_hz; 
-    uint16_t pulse_width_us; 
-} channel_state_t;
-
-typedef struct {
-    uint8_t  in1;
-    uint8_t  in2;
-    uint8_t  intensity;
-    uint8_t  frequency_hz;
-    uint16_t pulse_width_us;
-    int64_t  period_start_us;
-    int8_t   current_phase;
-} runtime_t;
-
 typedef enum {
     CH_DISABLED = 0x00,
     CH_READY = 0x01,
-    CH_RUNNING = 0x2,
+    CH_RUNNING = 0x02,
 } channel_status_t;
+
+// stimulation parameters (3 type)
+typedef struct {
+    uint8_t          intensity;
+    uint8_t          frequency_hz;
+    uint16_t         pulse_width_us;
+    channel_status_t status;
+} channel_state_t;
+
+typedef struct {
+    uint8_t          in1;
+    uint8_t          in2;
+    uint8_t          intensity;
+    uint8_t          frequency_hz;
+    uint16_t         pulse_width_us;
+    channel_status_t status;
+    int64_t          period_start_us;
+    int8_t           current_phase;
+} runtime_t;
 
 #endif

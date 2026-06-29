@@ -28,7 +28,9 @@
 #define FES_TASK_CORE               1
 
 void stimulation_start(void);
-void stimulation_set_running(bool running);
+bool stimulation_start_channel(uint8_t channel);
+bool stimulation_stop_channel(uint8_t channel);
+void stimulation_stop_all(void);
 bool stimulation_set_intensity(uint8_t channel, uint8_t intensity);
 bool stimulation_set_frequency(uint8_t channel, uint8_t frequency_hz);
 bool stimulation_set_pulse_width(uint8_t channel, uint16_t pulse_width_us);
