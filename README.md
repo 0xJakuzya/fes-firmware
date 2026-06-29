@@ -1,6 +1,6 @@
 ![ESP-IDF](https://img.shields.io/badge/ESP--IDF-v5.5.3-red)
-![ESP32-S3](https://img.shields.io/badge/ESP32--S3-target-blue)
-![Wi-Fi](https://img.shields.io/badge/Wi--Fi-SoftAP-brightgreen)
+![ESP32-Eth01](https://img.shields.io/badge/ESP32--S3-target-blue)
+![Wi-Fi](https://img.shields.io/badge/Wi--Fi-brightgreen)
 ![Ethernet](https://img.shields.io/badge/Ethernet-supported-blue)
 ![TCP](https://img.shields.io/badge/TCP-binary%20protocol-orange)
 
