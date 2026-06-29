@@ -46,12 +46,8 @@ bool wifi_set_password(const uint8_t *password, size_t length)
 void wifi_init(void)
 {
     char wifi_password[64] = WIFI_DEFAULT_PASSWORD;
-
-    nvs_flash_init(); 
-    load_password(wifi_password, sizeof(wifi_password)); 
-    esp_netif_init(); 
-    esp_event_loop_create_default(); 
-    esp_netif_create_default_wifi_ap(); 
+    load_password(wifi_password, sizeof(wifi_password));
+    esp_netif_create_default_wifi_ap();
     wifi_init_config_t init_config = WIFI_INIT_CONFIG_DEFAULT(); 
     esp_wifi_init(&init_config);
     wifi_config_t config = { 

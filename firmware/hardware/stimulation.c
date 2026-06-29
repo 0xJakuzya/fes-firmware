@@ -5,6 +5,7 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "esp_timer.h"
+#include "esp_task_wdt.h"
 
 #define PHASE_OFF   (-2)
 #define PHASE_RESET (-1)
@@ -102,8 +103,10 @@ static void stimulation_task(void *arg)
     (void)arg;
 
     pca9685_init();
+    esp_task_wdt_add(NULL);
 
     for (;;) {
+        esp_task_wdt_reset();
         xSemaphoreTake(s_mutex, portMAX_DELAY);
         for (int i = 0; i < FES_CHANNEL_COUNT; ++i) {
             s_runtime[i].intensity      = s_params[i].intensity;

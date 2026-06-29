@@ -7,8 +7,6 @@
 
 void ethernet_init(void)
 {
-    esp_netif_init();
-    esp_event_loop_create_default();
     esp_netif_config_t netif_cfg = ESP_NETIF_DEFAULT_ETH();
     esp_netif_t *eth_netif = esp_netif_new(&netif_cfg);
     esp_netif_dhcpc_stop(eth_netif);

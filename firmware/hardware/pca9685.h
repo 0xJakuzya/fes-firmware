@@ -11,7 +11,7 @@
 #define PCA9685_OSC_HZ          25000000
 #define PCA9685_PWM_FREQ_HZ     1000
 #define PCA9685_PWM_MAX         4095
-#define PCA9685_I2C_TIMEOUT_MS  50
+#define PCA9685_I2C_TIMEOUT_MS  5
 
 #define PCA9685_REG_MODE1       0x00
 #define PCA9685_REG_MODE2       0x01
