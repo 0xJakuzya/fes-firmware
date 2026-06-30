@@ -1,5 +1,4 @@
 #include "pca9685.h"
-
 #include "driver/i2c_master.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -9,7 +8,7 @@ static i2c_master_dev_handle_t s_dev;
 
 static void pca9685_write_reg(uint8_t reg, uint8_t value)
 {
-    uint8_t buffer[2] = { reg, value };
+    uint8_t buffer[2] = {reg, value};
     i2c_master_transmit(s_dev, buffer, sizeof(buffer), PCA9685_I2C_TIMEOUT_MS);
 }
 
@@ -24,6 +23,20 @@ static void pca9685_write_led(uint8_t channel, uint16_t on, uint16_t off)
     };
     i2c_master_transmit(s_dev, buffer, sizeof(buffer), PCA9685_I2C_TIMEOUT_MS);
 }
+
+void pca9685_set_pwm(uint8_t channel, uint16_t value)
+{
+    if (value > PCA9685_PWM_MAX) {
+        value = PCA9685_PWM_MAX;
+    }
+    pca9685_write_led(channel, 0, value);
+}
+
+void pca9685_set_off(uint8_t channel)
+{
+    pca9685_write_led(channel, 0, 0);
+}
+
 
 static void pca9685_set_prescale(void)
 {
@@ -65,17 +78,4 @@ void pca9685_init(void)
     for (uint8_t channel = 0; channel < 16; ++channel) {
         pca9685_write_led(channel, 0, 0);
     }
-}
-
-void pca9685_set_pwm(uint8_t channel, uint16_t value)
-{
-    if (value > PCA9685_PWM_MAX) {
-        value = PCA9685_PWM_MAX;
-    }
-    pca9685_write_led(channel, 0, value);
-}
-
-void pca9685_set_off(uint8_t channel)
-{
-    pca9685_write_led(channel, 0, 0);
 }

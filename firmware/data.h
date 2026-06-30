@@ -76,4 +76,10 @@ typedef struct {
     int8_t           current_phase;
 } runtime_t;
 
+typedef enum {
+    FIELD_INTENSITY,
+    FIELD_FREQUENCY,
+    FIELD_PULSE_WIDTH,
+} channel_field_t;
+
 #endif

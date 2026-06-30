@@ -8,7 +8,7 @@
 #include "nvs.h"
 #include "nvs_flash.h"
 
-static void load_password(char *password, size_t size)
+static void wifi_load_password(char *password, size_t size)
 {
     nvs_handle_t nvs; 
     if (nvs_open("config", NVS_READONLY, &nvs) != ESP_OK) {
@@ -46,7 +46,7 @@ bool wifi_set_password(const uint8_t *password, size_t length)
 void wifi_init(void)
 {
     char wifi_password[64] = WIFI_DEFAULT_PASSWORD;
-    load_password(wifi_password, sizeof(wifi_password));
+    wifi_load_password(wifi_password, sizeof(wifi_password));
     esp_netif_create_default_wifi_ap();
     wifi_init_config_t init_config = WIFI_INIT_CONFIG_DEFAULT(); 
     esp_wifi_init(&init_config);
