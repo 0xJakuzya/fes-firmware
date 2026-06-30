@@ -6,14 +6,17 @@
 static i2c_master_bus_handle_t s_bus;
 static i2c_master_dev_handle_t s_dev;
 
+// write one 8-bit register
 static void pca9685_write_reg(uint8_t reg, uint8_t value)
 {
     uint8_t buffer[2] = {reg, value};
     i2c_master_transmit(s_dev, buffer, sizeof(buffer), PCA9685_I2C_TIMEOUT_MS);
 }
 
+// write on/off counts for one led channel
 static void pca9685_write_led(uint8_t channel, uint16_t on, uint16_t off)
 {
+    // led regs: 4 per channel, base LED0_ON_L
     uint8_t buffer[5] = {
         (uint8_t)(PCA9685_REG_LED0_ON_L + 4 * channel),
         (uint8_t)(on & 0xFF),
@@ -24,20 +27,23 @@ static void pca9685_write_led(uint8_t channel, uint16_t on, uint16_t off)
     i2c_master_transmit(s_dev, buffer, sizeof(buffer), PCA9685_I2C_TIMEOUT_MS);
 }
 
+// set channel duty (on=0, off=value)
 void pca9685_set_pwm(uint8_t channel, uint16_t value)
 {
+    // clamp to max
     if (value > PCA9685_PWM_MAX) {
         value = PCA9685_PWM_MAX;
     }
     pca9685_write_led(channel, 0, value);
 }
 
+// turn channel off
 void pca9685_set_off(uint8_t channel)
 {
     pca9685_write_led(channel, 0, 0);
 }
 
-
+// set pwm frequency 
 static void pca9685_set_prescale(void)
 {
     uint32_t prescale = (PCA9685_OSC_HZ + (4096UL * PCA9685_PWM_FREQ_HZ) / 2) / (4096UL * PCA9685_PWM_FREQ_HZ);
@@ -50,12 +56,13 @@ static void pca9685_set_prescale(void)
     pca9685_write_reg(PCA9685_REG_MODE1, PCA9685_MODE1_SLEEP);
     pca9685_write_reg(PCA9685_REG_PRESCALE, (uint8_t)prescale);
     pca9685_write_reg(PCA9685_REG_MODE1, PCA9685_MODE1_AI);
-    vTaskDelay(pdMS_TO_TICKS(1));  
+    vTaskDelay(pdMS_TO_TICKS(1));
     pca9685_write_reg(PCA9685_REG_MODE1, PCA9685_MODE1_AI | PCA9685_MODE1_RESTART);
 }
 
 void pca9685_init(void)
 {
+    // configure i2c bus
     i2c_master_bus_config_t bus_config = {
         .i2c_port = -1,
         .sda_io_num = PCA9685_SDA_GPIO,
@@ -66,6 +73,7 @@ void pca9685_init(void)
     };
     i2c_new_master_bus(&bus_config, &s_bus);
 
+    // add pca9685 device
     i2c_device_config_t dev_config = {
         .dev_addr_length = I2C_ADDR_BIT_LEN_7,
         .device_address = PCA9685_I2C_ADDR,
@@ -73,8 +81,10 @@ void pca9685_init(void)
     };
     i2c_master_bus_add_device(s_bus, &dev_config, &s_dev);
 
+    // set pwm frequency
     pca9685_set_prescale();
 
+    // turn all 16 channels off
     for (uint8_t channel = 0; channel < 16; ++channel) {
         pca9685_write_led(channel, 0, 0);
     }

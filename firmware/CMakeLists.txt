@@ -6,9 +6,10 @@ idf_component_register(
         "transport/wifi.c"
         "transport/ethernet.c"
         "transport/commands.c"
-        "transport/utils.c"
+        "utils.c"
         "hardware/pca9685.c"
         "hardware/stimulation.c"
+        "hardware/pulse.c"
 
     INCLUDE_DIRS
         "."

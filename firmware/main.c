@@ -8,11 +8,17 @@
 
 void app_main(void)
 {
+    // init nvs storage
     nvs_flash_init();
+    // init network stack
     esp_netif_init();
     esp_event_loop_create_default();
+    // bring up wifi ap
     wifi_init();
+    // bring up ethernet
     ethernet_init();
+    // start stimulation task
     stimulation_start();
+    // start tcp server
     tcp_server_start();
 }
