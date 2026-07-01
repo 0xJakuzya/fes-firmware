@@ -5,6 +5,7 @@
 
 uint16_t read_u16(const uint8_t *data);
 void     write_u16(uint8_t *data, uint16_t value);
+int64_t  heartbeat_now_ms(void);
 
 uint16_t clamp_u16(uint16_t value, uint16_t low, uint16_t high);
 uint16_t intensity_to_pwm(uint8_t intensity);

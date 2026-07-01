@@ -1,20 +1,76 @@
 #include "tcp_server.h"
 #include "commands.h"
+#include "heartbeat.h"
 #include "protocol.h"
 #include "stimulation.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "lwip/sockets.h"
+#include <sys/time.h>
+
+static bool tcp_set_receive_timeout(int client_socket)
+{
+    struct timeval timeout = {
+        .tv_sec = 0,
+        .tv_usec = TCP_CLIENT_RECV_TIMEOUT_MS * 1000,
+    };
+
+    return setsockopt(client_socket, SOL_SOCKET, SO_RCVTIMEO,
+        &timeout, sizeof(timeout)) == 0;
+}
+
+static bool tcp_handle_frame(int client_socket, const protocol_frame_t *frame)
+{
+    if (frame->msg_type == MSG_TYPE_COMMAND) {
+        request_t request;
+
+        if (!protocol_request_from_frame(frame, &request)) {
+            return protocol_send_error(client_socket, frame->seq_id, RESULT_INVALID_LENGTH);
+        }
+
+        return command_handler(client_socket, &request);
+    }
+
+    if (frame->msg_type == MSG_TYPE_DATA || frame->msg_type == MSG_TYPE_ERROR) {
+        heartbeat_handle_response(frame);
+        return true;
+    }
+
+    return protocol_send_error(client_socket, frame->seq_id, RESULT_INVALID_TYPE);
+}
 
 static void tcp_client(int client_socket)
 {
-    get_info(client_socket, 0); // handshake
-    
-    request_t request;
+    if (!tcp_set_receive_timeout(client_socket)) {
+        return;
+    }
 
-    while (protocol_receive_request(client_socket, &request)) {
-        if (!command_handler(client_socket, &request)) {
+    heartbeat_init();
+
+    if (!get_info(client_socket, 0)) { // handshake
+        return;
+    }
+
+    while (true) {
+        protocol_frame_t frame;
+        protocol_recv_result_t result;
+
+        if (!heartbeat_service(client_socket)) {
+            break;
+        }
+
+        result = protocol_receive_frame(client_socket, &frame);
+        if (result == PROTOCOL_RECV_WAIT) {
+            vTaskDelay(1);
+            continue;
+        }
+
+        if (result != PROTOCOL_RECV_OK) {
+            break;
+        }
+
+        if (!tcp_handle_frame(client_socket, &frame)) {
             break;
         }
     }

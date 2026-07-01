@@ -1,6 +1,7 @@
 #include "utils.h"
 #include "pca9685.h"     
 #include "stimulation.h" 
+#include "esp_timer.h"
 
 // read little-endian u16
 uint16_t read_u16(const uint8_t *data)
@@ -13,6 +14,11 @@ void write_u16(uint8_t *data, uint16_t value)
 {
     data[0] = (uint8_t)(value & 0xFF);
     data[1] = (uint8_t)(value >> 8);
+}
+
+int64_t heartbeat_now_ms(void)
+{
+    return esp_timer_get_time() / 1000;
 }
 
 // clamp value to [low, high]

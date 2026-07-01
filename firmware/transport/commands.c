@@ -1,4 +1,5 @@
 #include "commands.h"
+#include "heartbeat.h"
 #include "stimulation.h"
 #include "utils.h"
 #include "wifi.h"
@@ -103,6 +104,7 @@ bool command_handler(int socket, const request_t *request)
     case GET_CHANNEL_PARAM: return get_channel_param(socket, request->seq_id, request);
     case START_CHANNEL:     return start_channel(socket, request->seq_id, request);
     case STOP_CHANNEL:      return stop_channel(socket, request->seq_id, request);
+    case SET_HEARTBEAT:     return heartbeat_handle_command(socket, request->seq_id, request);
     default:
         return protocol_send_error(socket, request->seq_id, RESULT_UNKNOWN_CMD);
     }
